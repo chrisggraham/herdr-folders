@@ -11,14 +11,11 @@ Files changed from Herdr's spaces mod:
                                "This computer" header, a New folder button,
                                machine folding kept in the folder tree, drag
                                and drop through the tree.
-  mods/herdr-folders/mod.json  Changed: the title is "Folders".
+  mods/herdr-folders/mod.json  Changed: the title is "Folders" and
+                               `cloned_from` was added.
 
 Files added, original to herdr-folders (MIT):
   mods/herdr-folders/tree.js
   mods/herdr-folders/folders.js
   test/tree.test.js
   package.json
-
-Files kept as Herdr ships them:
-  mods/herdr-folders/gpui-kit.d.ts
-  mods/herdr-folders/jsconfig.json
