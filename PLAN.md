@@ -106,4 +106,4 @@ Run in Herdr with the `main-folders` layout, with `herdr-app shot` screenshots i
 1. Click the folder-plus button on the "Spaces" header. Name the folder "Test", pick the server icon and a custom hex color. Expected: "Test" shows at the root with that icon and color.
 2. Drag a local space into "Test", then into a child folder of "Test". Expected: the space moves both times and stays there after a mod reload.
 3. Drag the dev-tools machine into "Test". Then try to drag a local space into a folder inside dev-tools. Expected: the machine moves with all its spaces; the second drop shows no drop line and does nothing.
-5. Delete "Test". Expected: its spaces, folders and the machine move to the root; no space closes.
+4. Delete "Test". Expected: its spaces, folders and the machine move to the root; no space closes.
