@@ -9,7 +9,6 @@ import {
   deleteFolder,
   settle,
   rowsOf,
-  targetsFor,
   setFolded,
   updateFolder,
   rememberColor,
@@ -219,16 +218,6 @@ test("settle: puts every known space and machine in a list, and is repeatable", 
   assert.deepEqual(once.children.root, ["space:l1", "machine:dev"]);
   assert.deepEqual(once.children["machine:dev"], ["space:dev/r1"]);
   assert.deepEqual(settle(once, known([local("l1"), remote("dev", "r1")], ["dev"])), once);
-});
-
-test("targetsFor: only allowed places, root first, not where it already is", () => {
-  const places = (key) => targetsFor(sample(), key).map((t) => t.ref);
-  assert.deepEqual(places("space:l2"), ["root", "folder:b"]);
-  assert.deepEqual(places("space:l1"), ["folder:a", "folder:b"]);
-  assert.deepEqual(places("space:dev/r1"), ["folder:m"]);
-  assert.deepEqual(places("folder:a"), []);
-  assert.deepEqual(places("machine:dev"), ["folder:a", "folder:b"]);
-  assert.deepEqual(targetsFor(sample(), "space:l2").map((t) => t.depth), [0, 2]);
 });
 
 test("setFolded and updateFolder: change a copy", () => {

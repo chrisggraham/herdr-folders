@@ -121,25 +121,6 @@ export function slotNear(tree, ref, key, target, side) {
   return side === "after" ? at + 1 : at;
 }
 
-// Every place `key` may go, in tree order with the root first, except where
-// it already is. `depth` is how deep to indent the place's name.
-export function targetsFor(tree, key) {
-  const here = placeOf(tree, key);
-  const places = [];
-  const seen = new Set();
-  const visit = (ref, depth) => {
-    if (ref !== here && canMove(tree, key, ref)) places.push({ ref, depth });
-    for (const child of tree.children[ref] ?? []) {
-      if (!isContainer(child) || child === key || seen.has(child)) continue;
-      if (kindOf(child) === "folder" && !(nameOf(child) in tree.folders)) continue;
-      seen.add(child);
-      visit(child, depth + 1);
-    }
-  };
-  visit(ROOT, 0);
-  return places;
-}
-
 // ---- folders ----
 
 // A new folder goes after the last folder in `ref`, else first.

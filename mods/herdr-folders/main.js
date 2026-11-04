@@ -3,8 +3,7 @@
 // see LICENSE-APACHE and NOTICE). Changed from it, per Apache 2.0 section 4(b):
 //   - the rows are drawn as a tree of folders, spaces and remote machines
 //     (tree.js, folders.js); the "This computer" header is gone;
-//   - a New folder button on the header; a Move to... item in the space menu,
-//     which is now drawn by folders.js;
+//   - a New folder button on the header;
 //   - a machine's fold state is kept in the folder tree, not localStorage;
 //   - dragging a row moves it in the tree, not in Herdr's space order.
 //
@@ -15,8 +14,8 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, run, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
-import { Folders, overlayFor, openSpaceMenu } from "./folders.js";
+import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
+import { Folders, overlayFor } from "./folders.js";
 import { nameOf } from "./tree.js";
 
 function find(node, id) {
@@ -260,11 +259,9 @@ export default class Spaces extends View {
     });
   }
 
-  // `g`: this space's git, to offer the worktree items.
-  menu(w, g) {
-    let checkout = null;
-    if (g) checkout = g.linked ? "linked" : "main";
-    openSpaceMenu(w.id, checkout);
+  menu(w) {
+    // A popup is as tall as its items; height is only the most.
+    openOverlay({ mod: "menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
   }
 
   orderingDue(now) {
@@ -429,7 +426,7 @@ export default class Spaces extends View {
       .when(on, (el) => el.bg(t.selected))
       .when(!on, (el) => el.hover((s) => s.bg(t.hover)))
       .on_click(() => run("space.select", { id: w.id }))
-      .on_mouse_down("right", () => this.menu(w, g))
+      .on_mouse_down("right", () => this.menu(w))
       .child(
         h_flex()
           .gap(9)

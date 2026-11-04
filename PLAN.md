@@ -58,10 +58,9 @@ Default places:
 | Delete folder | Folder right-click → Delete folder | Its children move to its parent at its place. No space closes |
 | Fold / unfold | Chevron on a folder or machine row | Stored in the tree |
 | New space in folder | + on a folder row | `space.new` (on the folder's machine, if any). `run()` returns no id, so use the prior art's pending-new pattern (herdr-spaces-navigation/main.js:66): the first new space that shows goes in that folder |
-| Move by drag | Drag a space, folder or machine onto a folder or between rows | Only drops that pass `canMove` show a drop line |
-| Move by menu | Right-click a space, folder or machine → Move to… | Popup of allowed targets only, Root first when allowed |
+| Move by drag | Drag a space, folder or machine onto a folder or between rows | Only drops that pass `canMove` show a drop line. Drag is the only way to move |
 
-The space right-click menu is Herdr's menu plus one item, Move to…
+The space right-click menu is Herdr's own, unchanged.
 
 ## Icons and colors
 
@@ -74,7 +73,7 @@ The space right-click menu is Herdr's menu plus one item, Move to…
 
 - `mods/herdr-folders/main.js`: Herdr's `spaces` code with two hooks (rows, header button).
 - `mods/herdr-folders/tree.js`: pure logic, no app calls: `canMove`, `move`, `insertFolder`, `deleteFolder`, `rowsOf` (tree + spaces + machines → ordered draw list with depth), default places, `isHex`, `hueToHex`.
-- `mods/herdr-folders/folders.js`: load, save, shared state, menus, Move to… popup, Edit folder dialog.
+- `mods/herdr-folders/folders.js`: load, save, shared state, menus, Edit folder dialog.
 - `test/tree.test.js`: `node --test`.
 - `LICENSE` (MIT), `README.md`. Before any distribution: confirm the license of Herdr's `spaces` mod (only source so far: Carlos's NOTICE says Apache 2.0; the local mod states none), then add `LICENSE-APACHE` and `NOTICE` with the changed files listed.
 
@@ -85,6 +84,8 @@ Tab rows, more git features, a settings menu, agent status dots, start folders, 
 ## Scope check (2026-11-04)
 
 Acted on: shared state only (no file), no machine-header button, icons folder and CHANGELOG to Not built, one `swatches()`, reuse the pending-new and `field()` patterns, license files wait for a confirmed source. Rejected: append new folders at the end (Chris chose "after the last folder" as the default). Kept: machine fold state, because a machine is a folder node (Chris's decision).
+
+2026-11-04: Herdr's space menu stays unchanged; Move to… removed, drag only (Chris).
 
 ## Tests
 
@@ -105,5 +106,4 @@ Run in Herdr with the `main-folders` layout, with `herdr-app shot` screenshots i
 1. Click the folder-plus button on the "Spaces" header. Name the folder "Test", pick the server icon and a custom hex color. Expected: "Test" shows at the root with that icon and color.
 2. Drag a local space into "Test", then into a child folder of "Test". Expected: the space moves both times and stays there after a mod reload.
 3. Drag the dev-tools machine into "Test". Then try to drag a local space into a folder inside dev-tools. Expected: the machine moves with all its spaces; the second drop shows no drop line and does nothing.
-4. Right-click a dev-tools space → Move to…. Expected: the list shows only dev-tools and its folders.
 5. Delete "Test". Expected: its spaces, folders and the machine move to the root; no space closes.

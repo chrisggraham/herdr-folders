@@ -4,9 +4,9 @@
 
 import { div, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
-import { run, spaces, machines, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
+import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
 import {
-  ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear, targetsFor,
+  ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear,
   insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, rememberColor, isHex, hueToHex,
 } from "./tree.js";
 
@@ -64,15 +64,6 @@ export function openFolderMenu(key) {
   openOverlay({ mod: MOD, kind: "popup", width: 236, height: 330, props: { folderMenu: key } });
 }
 
-// `git`: "main" (a repo's own checkout), "linked" (a worktree) or null.
-export function openSpaceMenu(id, git) {
-  openOverlay({ mod: MOD, kind: "popup", width: 200, height: 260, props: { spaceMenu: id, git } });
-}
-
-function openMoveTo(key) {
-  openOverlay({ mod: MOD, kind: "popup", width: 236, height: 320, props: { moveTo: key } });
-}
-
 function openEditFolder(id) {
   openOverlay({ mod: MOD, kind: "dialog", width: 460, props: { edit: id } });
 }
@@ -81,8 +72,6 @@ function openEditFolder(id) {
 export function overlayFor(props) {
   const p = props ?? {};
   if (p.folderMenu) return new FolderMenu(p.folderMenu, p.overlay);
-  if (p.spaceMenu) return new SpaceMenu(p.spaceMenu, p.git, p.overlay);
-  if (p.moveTo) return new MoveMenu(p.moveTo, p.overlay);
   if (p.edit) return new EditFolderDialog(p.edit, p.overlay);
   return null;
 }
@@ -307,68 +296,7 @@ class FolderMenu {
       .when(isFolder, (el) => el.child(swatches(t, "folder", [...PRESETS, ...tree.recentColors], tree.folders[id]?.color ?? null, paint)))
       .child(item("folder-new-here", "New folder here", () => newFolderIn(this.key)))
       .when(isFolder, (el) => el.child(item("folder-edit", "Edit folder…", () => openEditFolder(id))))
-      .child(item("folder-move", "Move to…", () => openMoveTo(this.key)))
       .when(isFolder, (el) => el.child(separator(t)).child(item("folder-delete", "Delete folder", () => saveTree(deleteFolder(loadTree(), id)))));
-  }
-}
-
-// ---- overlay: a space's menu (Herdr's items, plus Move to…) ----
-
-class SpaceMenu {
-  constructor(id, git, overlay) {
-    this.id = id;
-    this.git = git;
-    this.overlay = overlay;
-  }
-
-  render() {
-    const t = theme();
-    const item = (key, label, action) => menuItem(t, this.overlay, key, label, action);
-    const worktree = (action, size) => () => openOverlay({ mod: "worktree", kind: "dialog", ...size, props: { space: this.id, action } });
-    return popupFrame(t, "space-menu")
-      .child(item("space-rename", "Rename", () => run("space.rename", { id: this.id })))
-      .child(item("space-move", "Move to…", () => openMoveTo(`space:${this.id}`)))
-      .when(Boolean(this.git), (el) => el
-        .child(item("space-worktree-new", "New worktree", worktree("new", { width: 440, height: 260 })))
-        .child(item("space-worktree-open", "Open worktree", worktree("open", { width: 560, height: 480 }))))
-      .when(this.git === "linked", (el) => el.child(item("space-worktree-remove", "Remove worktree", worktree("remove", { width: 440, height: 260 }))))
-      .child(separator(t))
-      .child(item("space-close", "Close", () => run("space.close", { id: this.id })));
-  }
-}
-
-// ---- overlay: Move to… ----
-
-class MoveMenu {
-  constructor(key, overlay) {
-    this.key = key;
-    this.overlay = overlay;
-  }
-
-  // The tree with this computer's machines in it, so they can be chosen.
-  settled() {
-    return settle(loadTree(), { spaces: [], machines: machines().map((m) => m.name) });
-  }
-
-  labelOf(tree, ref) {
-    if (ref === ROOT) return "Top level";
-    if (kindOf(ref) === "machine") return nameOf(ref);
-    return tree.folders[nameOf(ref)].name;
-  }
-
-  render() {
-    const t = theme();
-    const tree = this.settled();
-    const places = targetsFor(tree, this.key);
-    const go = (ref) => () => saveTree(move(this.settled(), this.key, ref, Infinity));
-    const rows = places.map(({ ref, depth }) => {
-      const icon = kindOf(ref) === "machine" ? "server" : "folder";
-      return menuItem(t, this.overlay, `move-to-${ref}`, h_flex().gap(7).items_center().pl(depth * 10)
-        .child(svg(iconPath(ref === ROOT ? "layers" : icon)).size(13).flex_none().text_color(t.muted))
-        .child(div().flex_1().min_w(0).truncate().child(this.labelOf(tree, ref))), go(ref));
-    });
-    const none = div().h(30).px(10).flex().items_center().text_color(t.dim).child("Nowhere else to put it");
-    return popupFrame(t, "move-menu").child(div().px(10).py(4).text_size(11).text_color(t.dim).child("Move to")).children(places.length ? rows : [none]);
   }
 }
 
