@@ -28,9 +28,8 @@ const THEME_COLORS = { ansi6: "#399a8f", ansi3: "#c67e57", ansi4: "#5d84cc", ans
 const NO_COLOR = null;
 
 // 32 presets: 8 hues (red, orange, yellow, green, teal, blue, violet, pink)
-// in three rows (vibrant, a little muted, more muted), then a row of greys,
-// light to dark, none so light that the white icon vanishes. The row starts
-// with the default (no color),.
+// in three rows (vibrant, a little muted, more muted), then No color and 7
+// greys, light to dark, none so light that the white icon vanishes.
 const PRESETS = [
   "#e13e33", "#f86f25", "#eaa918", "#2bbf62", "#0dc6b1", "#2b75fe", "#664ff7", "#e4408e",
   "#ca524a", "#dc7741", "#ce9e34", "#3eac67", "#26ad9e", "#477de2", "#7665e1", "#ce568f",
@@ -43,7 +42,7 @@ const iconPath = (name) => `mods/workspace-chrome/${name}.svg`;
 
 // ---- the saved tree ----
 
-export function loadTree() {
+function loadTree() {
   return shared(STORE_KEY) ?? emptyTree();
 }
 
@@ -58,15 +57,15 @@ function fillOf(color, t) {
 }
 
 // A new folder in `ref`, with its dialog open to name it.
-export function newFolderIn(ref) {
+function newFolderIn(ref) {
   const id = `f${Date.now().toString(36)}${Math.random().toString(36).slice(2, 5)}`;
   saveTree(insertFolder(loadTree(), ref, id, NEW_FOLDER_NAME));
-  openOverlay({ mod: MOD, kind: "dialog", width: 460, props: { edit: id } });
+  openEditFolder(id);
 }
 
 // ---- opening the overlays ----
 
-export function openFolderMenu(key) {
+function openFolderMenu(key) {
   openOverlay({ mod: MOD, kind: "popup", width: 236, height: 330, props: { folderMenu: key } });
 }
 
@@ -122,13 +121,16 @@ export class Folders {
 
   // ---- new spaces in a folder ----
 
-  // Unfolds the folder so the new space shows. `run` names no id back, so the first space that appears on the folder's
-  // machine goes in the folder (see adoptNew).
+  // Unfolds the folder so the new space shows. `run` names no id back, so the
+  // first space that appears on the folder's machine goes in the folder (see adoptNew).
   newSpaceIn(key) {
-    saveTree(setFolded(loadTree(), key, false));
-    const machine = machineAt(loadTree(), key);
-    setShared(PENDING_KEY, { ref: key, machine, before: spaces().map((s) => s.id), until: Date.now() + PENDING_SPACE_MS });
-    run("space.new", machine ? { machine } : {});
+    const tree = setFolded(loadTree(), key, false);
+    saveTree(tree);
+    const machine = machineAt(tree, key);
+    const before = spaces().map((s) => s.id);
+    const pending = { ref: key, machine, before, until: Date.now() + PENDING_SPACE_MS };
+    setShared(PENDING_KEY, pending);
+    run("space.new", { machine: machine ?? "" });
   }
 
   // Called often with the spaces that exist: files the one waiting for a folder.
@@ -147,7 +149,7 @@ export class Folders {
 
   // ---- rows ----
 
-  // Space-high rows at `depth` levels in.
+  // `content` moved `depth` levels in; the narrow sidebar has no indent.
   indent(content, depth, collapsed) {
     return v_flex().pl(collapsed ? 0 : depth * INDENT).child(content);
   }
@@ -183,7 +185,7 @@ export class Folders {
     const left = collapsed ? 0 : node.depth * INDENT;
     return v_flex().relative().id(`node-${node.key}`).flex_none()
       .when(aimed?.side === "into", (el) => el.bg(t.selected).rounded(8))
-      .when(Boolean(this.dragged === node.key && this.drop), (el) => el.opacity(0.5))
+      .when(this.dragged === node.key && this.drop !== null, (el) => el.opacity(0.5))
       .when(aimed?.side === "before", (el) => el.child(this.dropLine(t, left).top(0)))
       .when(aimed?.side === "after", (el) => el.child(this.dropLine(t, left).bottom(0)))
       .on_mouse_down("left", () => this.press(node.key))
