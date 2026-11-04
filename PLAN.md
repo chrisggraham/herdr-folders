@@ -52,8 +52,8 @@ Default places:
 |---|---|---|
 | New folder at root | Folder-plus button on the "Spaces" header | Folder "New folder" at root, Edit folder opens |
 | New folder inside | Folder or machine right-click → New folder here | Same, in that parent |
-| Edit folder | Folder right-click → Edit folder… | Dialog: name, icon row, color (24 presets, hex field with preview) |
-| Set color | Folder right-click | 24 swatches at the top of the menu, plus a no-color swatch |
+| Edit folder | Folder right-click → Edit folder… | Dialog: name, icon row, color (32 presets, hex field with preview) |
+| Set color | Folder right-click | 32 swatches at the top of the menu, plus a no-color swatch |
 | Delete folder | Folder right-click → Delete folder | Its children move to its parent at its place. No space closes |
 | Fold / unfold | Chevron on a folder or machine row | Stored in the tree |
 | New space in folder | + on a folder row | Unfolds the folder, then `space.new` (on the folder's machine, if any). `run()` returns no id, so use the prior art's pending-new pattern (herdr-spaces-navigation/main.js:66): the first new space that shows goes in that folder |
@@ -64,7 +64,7 @@ The space right-click menu is Herdr's own, unchanged.
 ## Icons and colors
 
 - Icon: default `mods/workspace-chrome/folder.svg`. The Edit folder dialog shows a row of these shipped icons: folder, layers, archive, files, file-text, server, monitor, terminal, git-branch, settings, pin, clock. Store the path.
-- Color: a theme name (`ansi3`, still draws for old folders) or a hex value. 24 hex presets in 3 rows of 8, one hue per column in this order: red, orange, yellow, green, teal, blue, violet, pink. Row 1 vibrant, row 2 a little muted, row 3 more muted (Chris's muted values: orange #c67e57, green #4e9c6b, teal #399a8f, blue #5d84cc, violet #8377cf, pink #bd6790). "No color" (grey) sits on its own row below. Custom: a hex field with a live preview swatch; no slider, no recent-colors row. New folders start expanded; a drop onto a folded folder leaves it folded.
+- Color: a theme name (`ansi3`, still draws for old folders) or a hex value. 32 hex presets in 4 rows of 8, one hue per column in this order: red, orange, yellow, green, teal, blue, violet, pink. Row 1 vibrant, row 2 a little muted, row 3 more muted, row 4 greys light to dark (#a6a6a6 to #444444) (Chris's muted values: orange #c67e57, green #4e9c6b, teal #399a8f, blue #5d84cc, violet #8377cf, pink #bd6790). "No color" (grey) sits on its own row below. Custom: a hex field with a live preview swatch; no slider, no recent-colors row. New folders start expanded; a drop onto a folded folder leaves it folded.
 - One `swatches()` renderer for the menu and the dialog, after the prior art's pattern (herdr-spaces-navigation/main.js:502). The dialog uses the prior art's `field()` pattern (main.js:566).
 - A hex color does not follow the theme. Accepted for version 1.
 

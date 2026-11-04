@@ -24,12 +24,14 @@ const SWATCHES_PER_ROW = 8;
 // Theme names show these muted values on a folder's tile.
 const THEME_COLORS = { ansi6: "#399a8f", ansi3: "#c67e57", ansi4: "#5d84cc", ansi5: "#8377cf", ansi2: "#4e9c6b", ansi1: "#bd6790" };
 
-// 24 presets: 8 hues (red, orange, yellow, green, teal, blue, violet, pink)
-// in three rows: vibrant, a little muted, more muted.
+// 32 presets: 8 hues (red, orange, yellow, green, teal, blue, violet, pink)
+// in three rows (vibrant, a little muted, more muted), then a row of greys,
+// light to dark, none so light that the white icon vanishes.
 const PRESETS = [
   "#e13e33", "#f86f25", "#eaa918", "#2bbf62", "#0dc6b1", "#2b75fe", "#664ff7", "#e4408e",
   "#ca524a", "#dc7741", "#ce9e34", "#3eac67", "#26ad9e", "#477de2", "#7665e1", "#ce568f",
   "#b8625c", "#c67e57", "#b8964a", "#4e9c6b", "#399a8f", "#5d84cc", "#8377cf", "#bd6790",
+  "#a6a6a6", "#979797", "#888888", "#797979", "#6b6b6b", "#5d5d5d", "#505050", "#444444",
 ];
 // The default grey sits on a row of its own below the grid.
 const NO_COLOR = null;
