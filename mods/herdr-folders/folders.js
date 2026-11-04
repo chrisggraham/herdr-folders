@@ -3,11 +3,11 @@
 // The rules for where things may go live in tree.js.
 
 import { div, svg } from "gpui-kit";
-import { v_flex, h_flex, InputState, Input, Slider, SliderState, SliderTrack, SliderIndicator, SliderThumb } from "gpui-base";
+import { v_flex, h_flex, InputState, Input } from "gpui-base";
 import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
 import {
   ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear,
-  insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, rememberColor, isHex, hueToHex,
+  insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, rememberColor, isHex,
 } from "./tree.js";
 
 const MOD = "herdr-folders";
@@ -19,18 +19,18 @@ const FOLDER_ROW = 28;
 const INDENT = 14;
 const EDGE = 7; // px at a folder row's top or bottom that drop beside it, not into it
 const SPACE_ROW_HALF = 15;
-const SWATCHES_PER_ROW = 8;
-const START_HUE = 200;
+const SWATCHES_PER_ROW = 6;
 
 // Theme names show these muted values on a folder's tile.
 const THEME_COLORS = { ansi6: "#399a8f", ansi3: "#c67e57", ansi4: "#5d84cc", ansi5: "#8377cf", ansi2: "#4e9c6b", ansi1: "#bd6790" };
 
-// 24 presets: the default grey, the six theme colors, then hex colors.
+// 12 muted presets in two rows of 6: the theme colors, then hex colors in the same family.
 const PRESETS = [
-  null, "ansi6", "ansi3", "ansi4", "ansi5", "ansi2", "ansi1", "#e5534b",
-  "#d4a72c", "#84a33a", "#14a3c4", "#4f63d8", "#c05bd6", "#a0714f", "#64748b", "#e87ca0",
-  "#f08c3a", "#a3b83e", "#2fb5a1", "#3c8dd9", "#7a6ff0", "#d05ba0", "#8a8f98", "#2d3748",
+  "ansi6", "ansi3", "ansi4", "ansi5", "ansi2", "ansi1",
+  "#6b7a8f", "#b8964a", "#c0605a", "#4a9bb0", "#9a7456", "#6670b8",
 ];
+// The default grey starts the row of recent colors.
+const NO_COLOR = null;
 
 const ICONS = ["folder", "layers", "archive", "files", "file-text", "server", "monitor", "terminal", "git-branch", "settings", "pin", "clock"];
 const iconPath = (name) => `mods/workspace-chrome/${name}.svg`;
@@ -294,7 +294,7 @@ class FolderMenu {
       closeOverlay(this.overlay);
     };
     return popupFrame(t, "folder-menu")
-      .when(isFolder, (el) => el.child(swatches(t, "folder", [...PRESETS, ...tree.recentColors], tree.folders[id]?.color ?? null, paint)))
+      .when(isFolder, (el) => el.child(swatches(t, "folder", [...PRESETS, NO_COLOR, ...tree.recentColors], tree.folders[id]?.color ?? null, paint)))
       .child(item("folder-new-here", "New folder here", () => newFolderIn(this.key)))
       .when(isFolder, (el) => el.child(item("folder-edit", "Edit folder…", () => openEditFolder(id))))
       .when(isFolder, (el) => el.child(separator(t)).child(item("folder-delete", "Delete folder", () => saveTree(deleteFolder(loadTree(), id)))));
@@ -312,16 +312,10 @@ class EditFolderDialog {
     this.color = folder.color ?? null;
     this.name = InputState.new({ value: folder.name });
     this.hex = InputState.new({ value: isHex(this.color) ? this.color : "", placeholder: "#rrggbb" });
-    this.hue = SliderState.new({ min: 0, max: 360, step: 1, value: START_HUE });
     this.name.on("submit", () => this.save());
     this.hex.on("change", (_e, cx) => {
       if (!isHex(this.hex.value())) return;
       this.color = this.hex.value();
-      cx.notify();
-    });
-    this.hue.on("change", (hue, cx) => {
-      this.color = hueToHex(hue);
-      this.hex.set_value(this.color);
       cx.notify();
     });
     this.name.set_selected_range({ start: 0, end: folder.name.length });
@@ -354,7 +348,7 @@ class EditFolderDialog {
       .child(div().text_size(15).font_semibold().child("Edit folder"))
       .child(this.field(t, "Name", Input.new(this.name).w_full().text_size(13).text_color(t.foreground)))
       .child(this.labeled(t, "Icon", this.iconRow(t)))
-      .child(this.labeled(t, "Color", swatches(t, "edit", [...PRESETS, ...tree.recentColors], this.color, (color, cx) => this.chooseColor(color, cx))))
+      .child(this.labeled(t, "Color", swatches(t, "edit", [...PRESETS, NO_COLOR, ...tree.recentColors], this.color, (color, cx) => this.chooseColor(color, cx))))
       .child(this.hexRow(t))
       .child(h_flex().pt(4).gap(8).justify_end()
         .child(this.button(t, "folder-cancel", "Cancel", false, () => closeOverlay(this.overlay)))
@@ -384,19 +378,12 @@ class EditFolderDialog {
     }));
   }
 
-  // A preview of the color, the hex field, and a hue slider.
+  // A preview of the color, and the hex field.
   hexRow(t) {
-    const hue = this.hue;
-    const slider = Slider.new(hue).w_full().child(
-      SliderTrack.new(hue).flex().items_center().h(24).w_full().child(
-        SliderIndicator.new(hue).relative().w_full().h(6).rounded(3).bg(t.raised)
-          .child(SliderThumb.new(hue).size(16).rounded(8).bg(fillOf(this.color, t)).border_2().border_color(t.foreground).ml(-8)),
-      ),
-    );
     const preview = div().size(34).flex_none().rounded(8).border_1().border_color(t.input).bg(fillOf(this.color, t));
     const hexBox = div().flex_1().min_w(0).h(34).px(10).flex().items_center().rounded(8).border_1().border_color(t.input).bg(t.background)
       .child(Input.new(this.hex).w_full().text_size(13).text_color(t.foreground));
-    return v_flex().gap(8).child(h_flex().gap(8).child(preview).child(hexBox)).child(slider);
+    return h_flex().gap(8).child(preview).child(hexBox);
   }
 
   button(t, key, label, primary, action) {

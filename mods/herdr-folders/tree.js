@@ -12,8 +12,6 @@ export const ROOT = "root";
 export const DEFAULT_ICON = "mods/workspace-chrome/folder.svg";
 
 const MAX_RECENT_COLORS = 8;
-const HUE_SATURATION = 0.6;
-const HUE_LIGHTNESS = 0.5;
 const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 export function emptyTree() {
@@ -239,25 +237,4 @@ export function rememberColor(tree, hex) {
 
 export function isHex(text) {
   return typeof text === "string" && HEX_COLOR.test(text);
-}
-
-// A color from a hue in degrees, at one saturation and lightness.
-export function hueToHex(hue) {
-  const degrees = ((hue % 360) + 360) % 360;
-  const chroma = (1 - Math.abs(2 * HUE_LIGHTNESS - 1)) * HUE_SATURATION;
-  const second = chroma * (1 - Math.abs(((degrees / 60) % 2) - 1));
-  const floor = HUE_LIGHTNESS - chroma / 2;
-  const sectors = [
-    [chroma, second, 0],
-    [second, chroma, 0],
-    [0, chroma, second],
-    [0, second, chroma],
-    [second, 0, chroma],
-    [chroma, 0, second],
-  ];
-  const channels = sectors[Math.floor(degrees / 60)].map((value) => {
-    const byte = Math.round((value + floor) * 255);
-    return byte.toString(16).padStart(2, "0");
-  });
-  return `#${channels.join("")}`;
 }
