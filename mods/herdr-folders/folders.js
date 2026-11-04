@@ -116,9 +116,10 @@ export class Folders {
 
   // ---- new spaces in a folder ----
 
-  // `run` names no id back, so the first space that appears on the folder's
+  // Unfolds the folder so the new space shows. `run` names no id back, so the first space that appears on the folder's
   // machine goes in the folder (see adoptNew).
   newSpaceIn(key) {
+    saveTree(setFolded(loadTree(), key, false));
     const machine = machineAt(loadTree(), key);
     setShared(PENDING_KEY, { ref: key, machine, before: spaces().map((s) => s.id), until: Date.now() + PENDING_SPACE_MS });
     run("space.new", machine ? { machine } : {});

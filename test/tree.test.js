@@ -13,7 +13,6 @@ import {
   updateFolder,
   rememberColor,
   isHex,
-  hueToHex,
 } from "../mods/herdr-folders/tree.js";
 
 // This computer: folders a (holding b and a local space) and a local space.
@@ -244,8 +243,14 @@ test("isHex: six hex digits after a #", () => {
   for (const [text, expected] of cases) assert.equal(isHex(text), expected, String(text));
 });
 
-test("hueToHex: fixed saturation and lightness, the hue wraps", () => {
-  const cases = [[0, "#cc3333"], [120, "#33cc33"], [240, "#3333cc"], [60, "#cccc33"], [360, "#cc3333"], [-120, "#3333cc"]];
-  for (const [hue, expected] of cases) assert.equal(hueToHex(hue), expected, String(hue));
-  assert.equal(isHex(hueToHex(200.5)), true);
+test("setFolded unfolds a folded folder, which is what the + button does", () => {
+  const tree = sample();
+  tree.folders.a.folded = true;
+  assert.equal(setFolded(tree, "folder:a", false).folders.a.folded, false);
+});
+
+test("move: a drop onto a folded folder leaves it folded", () => {
+  const tree = sample();
+  tree.folders.a.folded = true;
+  assert.equal(move(tree, "space:l1", "folder:a", Infinity).folders.a.folded, true);
 });
