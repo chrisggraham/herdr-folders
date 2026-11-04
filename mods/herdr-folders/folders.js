@@ -91,10 +91,11 @@ export class Folders {
     this.drop = null; // { ref, index, over, side } where a release would put it
   }
 
-  // The draw list for what exists now (see rowsOf).
+  // The draw list for what exists now (see rowsOf). Keeps the settled tree for
+  // the folder rows and for aiming a drag.
   nodes(known) {
     this.known = known;
-    this.tree = loadTree();
+    this.tree = settle(loadTree(), known);
     return rowsOf(this.tree, known);
   }
 
@@ -223,7 +224,7 @@ export class Folders {
 
   // Where a release over `node` at `y` px down would put the dragged key; null when that is not allowed.
   dropAt(node, y) {
-    const tree = settle(loadTree(), this.known);
+    const tree = this.tree;
     const side = this.sideOf(node, y);
     const ref = side === "into" ? node.key : node.parent;
     if (!canMove(tree, this.dragged, ref)) return null;
@@ -367,8 +368,11 @@ class EditFolderDialog {
   }
 
   field(t, label, input) {
-    const box = div().w_full().h(34).px(10).flex().items_center().rounded(8).border_1().border_color(t.input).bg(t.background).child(input);
-    return this.labeled(t, label, box);
+    return this.labeled(t, label, this.inputBox(t, input).w_full());
+  }
+
+  inputBox(t, input) {
+    return div().h(34).px(10).flex().items_center().rounded(8).border_1().border_color(t.input).bg(t.background).child(input);
   }
 
   iconRow(t) {
@@ -388,8 +392,7 @@ class EditFolderDialog {
   // A preview of the color, and the hex field.
   hexRow(t) {
     const preview = div().size(34).flex_none().rounded(8).border_1().border_color(t.input).bg(fillOf(this.color, t));
-    const hexBox = div().flex_1().min_w(0).h(34).px(10).flex().items_center().rounded(8).border_1().border_color(t.input).bg(t.background)
-      .child(Input.new(this.hex).w_full().text_size(13).text_color(t.foreground));
+    const hexBox = this.inputBox(t, Input.new(this.hex).w_full().text_size(13).text_color(t.foreground)).flex_1().min_w(0);
     return h_flex().gap(8).child(preview).child(hexBox);
   }
 

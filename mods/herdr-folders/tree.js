@@ -37,7 +37,7 @@ function homeOf(machine) {
 // ---- where things are ----
 
 // The ref of the list that holds `key`, or null when no list does.
-export function parentOf(tree, key) {
+function parentOf(tree, key) {
   return Object.keys(tree.children).find((ref) => tree.children[ref].includes(key)) ?? null;
 }
 
@@ -194,7 +194,7 @@ export function settle(tree, known) {
 }
 
 // The draw list: one node per thing to show, parents before their children,
-// with its depth, its parent ref and its index in the settled list. A folded
+// with its depth and its parent ref. A folded
 // node's children are left out. Keys for what no longer exists are skipped
 // and stay in the store (a machine can come back).
 export function rowsOf(tree, known) {
@@ -207,18 +207,18 @@ export function rowsOf(tree, known) {
   const visited = new Set();
 
   const walk = (ref, depth, out) => {
-    (full.children[ref] ?? []).forEach((key, index) => {
-      if (!exists(key)) return;
-      const node = { key, kind: kindOf(key), depth, parent: ref, index };
+    for (const key of full.children[ref] ?? []) {
+      if (!exists(key)) continue;
+      const node = { key, kind: kindOf(key), depth, parent: ref };
       out.push(node);
-      if (!isContainer(key) || visited.has(key)) return;
+      if (!isContainer(key) || visited.has(key)) continue;
       visited.add(key);
       node.folded = isFolded(full, key);
       const inside = [];
       walk(key, depth + 1, inside);
       node.empty = inside.length === 0;
       if (!node.folded) out.push(...inside);
-    });
+    }
   };
 
   const nodes = [];

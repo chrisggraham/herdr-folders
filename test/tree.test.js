@@ -202,11 +202,10 @@ test("rowsOf: a machine with nothing to show says so", () => {
   assert.equal(byKey["machine:idle"].empty, true);
 });
 
-test("rowsOf: each node knows its parent and place in the parent's list", () => {
+test("rowsOf: each node knows its parent", () => {
   const nodes = rowsOf(sample(), known([local("l1"), local("l2")], ["dev", "other"]));
   const second = nodes.find((n) => n.key === "space:l2");
   assert.equal(second.parent, "folder:a");
-  assert.equal(second.index, 1);
 });
 
 test("settle: puts every known space and machine in a list, and is repeatable", () => {
