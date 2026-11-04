@@ -11,11 +11,9 @@
 export const ROOT = "root";
 export const DEFAULT_ICON = "mods/workspace-chrome/folder.svg";
 
-const MAX_RECENT_COLORS = 8;
-const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 export function emptyTree() {
-  return { version: 1, folders: {}, machines: {}, children: { [ROOT]: [] }, recentColors: [] };
+  return { version: 1, folders: {}, machines: {}, children: { [ROOT]: [] } };
 }
 
 // ---- keys ----
@@ -225,16 +223,4 @@ export function rowsOf(tree, known) {
   const nodes = [];
   walk(ROOT, 0, nodes);
   return nodes;
-}
-
-// ---- colors ----
-
-// Newest first, no repeats.
-export function rememberColor(tree, hex) {
-  const others = tree.recentColors.filter((color) => color !== hex);
-  return { ...tree, recentColors: [hex, ...others].slice(0, MAX_RECENT_COLORS) };
-}
-
-export function isHex(text) {
-  return typeof text === "string" && HEX_COLOR.test(text);
 }

@@ -11,8 +11,6 @@ import {
   rowsOf,
   setFolded,
   updateFolder,
-  rememberColor,
-  isHex,
 } from "../mods/herdr-folders/tree.js";
 
 // This computer: folders a (holding b and a local space) and a local space.
@@ -33,7 +31,6 @@ function sample() {
       "machine:other": ["folder:o"],
       "folder:o": [],
     },
-    recentColors: [],
   };
 }
 
@@ -226,21 +223,6 @@ test("setFolded and updateFolder: change a copy", () => {
   assert.equal(updateFolder(tree, "a", { name: "Work", color: "ansi3" }).folders.a.name, "Work");
   assert.equal(tree.folders.a.name, "a");
   assert.equal(tree.folders.a.folded, false);
-});
-
-test("rememberColor: newest first, no repeats, eight at most", () => {
-  let tree = emptyTree();
-  for (let n = 0; n < 10; n++) tree = rememberColor(tree, `#00000${n}`);
-  assert.equal(tree.recentColors.length, 8);
-  assert.equal(tree.recentColors[0], "#000009");
-  tree = rememberColor(tree, "#000005");
-  assert.equal(tree.recentColors[0], "#000005");
-  assert.equal(tree.recentColors.filter((c) => c === "#000005").length, 1);
-});
-
-test("isHex: six hex digits after a #", () => {
-  const cases = [["#a1B2c3", true], ["#000000", true], ["#abc", false], ["a1b2c3", false], ["#12345g", false], ["#1234567", false], ["", false], [null, false]];
-  for (const [text, expected] of cases) assert.equal(isHex(text), expected, String(text));
 });
 
 test("setFolded unfolds a folded folder, which is what the + button does", () => {
