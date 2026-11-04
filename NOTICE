@@ -8,10 +8,9 @@ Apache License 2.0 (see LICENSE-APACHE).
 
 Files changed from Herdr's spaces mod:
   mods/herdr-folders/main.js   Changed: rows drawn as a folder tree, no
-                               "This computer" header, a New folder button, a
-                               space menu with Move to..., machine folding kept
-                               in the folder tree, drag and drop through the
-                               tree.
+                               "This computer" header, a New folder button,
+                               machine folding kept in the folder tree, drag
+                               and drop through the tree.
   mods/herdr-folders/mod.json  Changed: the title is "Folders".
 
 Files added, original to herdr-folders (MIT):
