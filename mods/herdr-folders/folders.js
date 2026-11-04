@@ -24,17 +24,19 @@ const SWATCHES_PER_ROW = 8;
 // Theme names show these muted values on a folder's tile.
 const THEME_COLORS = { ansi6: "#399a8f", ansi3: "#c67e57", ansi4: "#5d84cc", ansi5: "#8377cf", ansi2: "#4e9c6b", ansi1: "#bd6790" };
 
+// "No color" shows the theme's dim grey with a cross, so it differs from the greys.
+const NO_COLOR = null;
+
 // 32 presets: 8 hues (red, orange, yellow, green, teal, blue, violet, pink)
 // in three rows (vibrant, a little muted, more muted), then a row of greys,
-// light to dark, none so light that the white icon vanishes.
+// light to dark, none so light that the white icon vanishes. The row starts
+// with the default (no color),.
 const PRESETS = [
   "#e13e33", "#f86f25", "#eaa918", "#2bbf62", "#0dc6b1", "#2b75fe", "#664ff7", "#e4408e",
   "#ca524a", "#dc7741", "#ce9e34", "#3eac67", "#26ad9e", "#477de2", "#7665e1", "#ce568f",
   "#b8625c", "#c67e57", "#b8964a", "#4e9c6b", "#399a8f", "#5d84cc", "#8377cf", "#bd6790",
-  "#a6a6a6", "#979797", "#888888", "#797979", "#6b6b6b", "#5d5d5d", "#505050", "#444444",
+  NO_COLOR, "#a6a6a6", "#969696", "#858585", "#757575", "#656565", "#545454", "#444444",
 ];
-// The default grey sits on a row of its own below the grid.
-const NO_COLOR = null;
 
 const ICONS = ["folder", "layers", "archive", "files", "file-text", "server", "monitor", "terminal", "git-branch", "settings", "pin", "clock"];
 const iconPath = (name) => `mods/workspace-chrome/${name}.svg`;
@@ -267,6 +269,7 @@ function separator(t) {
 // Color dots in rows; `current` has a ring and `pick(color, cx)` runs on a click.
 function swatches(t, key, colors, current, pick) {
   const swatch = (color) => div().id(`${key}-color-${color ?? "default"}`).size(20).flex_none().rounded(10).cursor_pointer()
+    .flex().items_center().justify_center().text_size(12).text_color(t.popover).child(color === NO_COLOR ? "×" : "")
     .bg(fillOf(color, t)).border_2().border_color(color === current ? t.foreground : t.popover)
     .hover((s) => s.border_color(t.muted))
     .on_click((_e, cx) => pick(color, cx));
@@ -298,7 +301,7 @@ class FolderMenu {
       closeOverlay(this.overlay);
     };
     return popupFrame(t, "folder-menu")
-      .when(isFolder, (el) => el.child(swatches(t, "folder", [...PRESETS, NO_COLOR], tree.folders[id]?.color ?? null, paint)))
+      .when(isFolder, (el) => el.child(swatches(t, "folder", PRESETS, tree.folders[id]?.color ?? null, paint)))
       .child(item("folder-new-here", "New folder here", () => newFolderIn(this.key)))
       .when(isFolder, (el) => el.child(item("folder-edit", "Edit folder…", () => openEditFolder(id))))
       .when(isFolder, (el) => el.child(separator(t)).child(item("folder-delete", "Delete folder", () => saveTree(deleteFolder(loadTree(), id)))));
@@ -350,7 +353,7 @@ class EditFolderDialog {
       .child(div().text_size(15).font_semibold().child("Edit folder"))
       .child(this.field(t, "Name", Input.new(this.name).w_full().text_size(13).text_color(t.foreground)))
       .child(this.labeled(t, "Icon", this.iconRow(t)))
-      .child(this.labeled(t, "Color", swatches(t, "edit", [...PRESETS, NO_COLOR], this.color, (color, cx) => this.chooseColor(color, cx))))
+      .child(this.labeled(t, "Color", swatches(t, "edit", PRESETS, this.color, (color, cx) => this.chooseColor(color, cx))))
       .child(this.hexRow(t))
       .child(h_flex().pt(4).gap(8).justify_end()
         .child(this.button(t, "folder-cancel", "Cancel", false, () => closeOverlay(this.overlay)))
