@@ -153,7 +153,7 @@ export class Folders {
 
   // Space-high rows at `depth` levels in.
   indent(content, depth, collapsed) {
-    return div().pl(collapsed ? 0 : depth * INDENT).child(content);
+    return v_flex().pl(collapsed ? 0 : depth * INDENT).child(content);
   }
 
   folderRow(node, t, collapsed) {
@@ -233,9 +233,9 @@ export class Folders {
     return { ref, index, over: node.key, side };
   }
 
-  // A folder takes a drop in its middle; everything else splits in halves.
+  // A folder or machine takes a drop in its middle; a space splits in halves.
   sideOf(node, y) {
-    if (node.kind !== "folder") return y < SPACE_ROW_HALF ? "before" : "after";
+    if (node.kind === "space") return y < SPACE_ROW_HALF ? "before" : "after";
     if (y < EDGE) return "before";
     const roomAfter = node.folded || node.empty;
     return roomAfter && y > FOLDER_ROW - EDGE ? "after" : "into";
