@@ -106,3 +106,9 @@ Run in Herdr with the `main-folders` layout, with `herdr-app shot` screenshots i
 4. Delete "Test". Expected: its spaces, folders and the machine move to the root; no space closes.
 
 2026-11-04: slider removed; 24 presets, 3 rows of 8 (vibrant, a little muted, more muted) plus a custom hex field; + unfolds its folder, drops keep fold (Chris).
+
+## Follow-ups
+
+- The "+" button can show a double pending slot.
+- Collapsed-mode numbering of spaces is wrong.
+- tree.js reads a space's machine from its id; use the `machine` field Herdr gives.
