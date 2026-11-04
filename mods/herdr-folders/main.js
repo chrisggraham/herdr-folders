@@ -477,6 +477,8 @@ export default class Spaces extends View {
             .on_click(() => run("space.new")).child(svg("mods/workspace-chrome/plus.svg").size(14)))))
       .child(v_flex().flex_1().min_h(0).px(8).pb(14).overflow_y_scrollbar().mode("always")
         .on_mouse_up("left", (_e, cx) => { this.folders.cancel(); cx.notify(); })
+        // gpui-kit has no "mouse up outside" handler, so leaving the list ends the drag.
+        .on_hover((hovered, cx) => { if (!hovered) { this.folders.cancel(); cx.notify(); } })
         .children(this.grouped(t, collapsed)));
   }
 }
