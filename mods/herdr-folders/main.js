@@ -1,3 +1,13 @@
+// herdr-folders. This file started as Herdr's "spaces" mod, v0.1.13
+// (https://github.com/herdrdev/herdr-app, defaults/mods/spaces, Apache 2.0;
+// see LICENSE-APACHE and NOTICE). Changed from it, per Apache 2.0 section 4(b):
+//   - the rows are drawn as a tree of folders, spaces and remote machines
+//     (tree.js, folders.js); the "This computer" header is gone;
+//   - a New folder button on the header; a Move to... item in the space menu,
+//     which is now drawn by folders.js;
+//   - a machine's fold state is kept in the folder tree, not localStorage;
+//   - dragging a row moves it in the tree, not in Herdr's space order.
+//
 // Workspace spaces: stable colored avatars, worktrees under their checkout,
 // grouped by machine when more than one is known. After a space's name, the repo
 // its first terminal is in now, only where unusual: branch, ahead/behind. Agent state lives in the agents list, not here. Click to
@@ -5,7 +15,9 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout } from "herdr";
+import { spaces, machines, panes, run, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
+import { Folders, overlayFor, openSpaceMenu } from "./folders.js";
+import { nameOf } from "./tree.js";
 
 function find(node, id) {
   if (node?.id === id) return node;
@@ -47,6 +59,10 @@ export function tone(t, status) {
 
 export default class Spaces extends View {
   init(_props, cx) {
+    // Opened as one of the folder menus or dialogs: draw only that.
+    this.overlay = overlayFor(props());
+    if (this.overlay) return;
+    this.folders = new Folders();
     this.git = {}; // where() -> { name, branch, ahead, behind, repo, linked }, null: not a repo
     this.checked = {}; // where() -> when it was last looked at
     this.unsure = new Set(); // where()s git couldn't answer for (a machine away)
@@ -59,12 +75,10 @@ export default class Spaces extends View {
     // worktree appears under its repo instead of jumping there.
     this.shown = new Set(spaces().map((s) => s.id));
     this.born = {};
-    this.pressed = null;
-    this.over = null;
     this.machines = [];
     this.reconnecting = JSON.parse(localStorage.getItem("machines.reconnecting") ?? "{}");
     for (const state of Object.values(this.reconnecting)) state.busy = false;
-    this.folded = new Set(JSON.parse(localStorage.getItem("machines.folded") ?? "[]"));
+    this.folded = new Set(); // machines folded in the folder tree, read each tick
     this.refreshMachines(cx);
     cx.timer.every(15000, cx => this.refreshMachines(cx));
     // `git status` walks the whole tree, on another machine a process there:
@@ -75,6 +89,8 @@ export default class Spaces extends View {
   checkNew(cx) {
     const now = Date.now();
     const sp = spaces();
+    this.folded = this.folders.foldedMachines();
+    this.folders.adoptNew(sp);
     for (const s of sp) if (!this.shown.has(s.id)) this.born[s.id] ??= now;
     const due = this.due(now, sp, panes());
     if (due.size) this.refreshGit(due, cx);
@@ -162,8 +178,7 @@ export default class Spaces extends View {
         if (machine.session) args.push("--session", machine.session);
         if (machine.temporary) args.push("--temp");
         await ask(args);
-        this.folded.delete(name);
-        localStorage.setItem("machines.folded", JSON.stringify([...this.folded]));
+        this.folders.unfoldMachine(name);
         delete this.reconnecting[name];
       } catch (e) {
         state.error = String(e.message ?? e);
@@ -245,9 +260,11 @@ export default class Spaces extends View {
     });
   }
 
-  menu(w) {
-    // A popup is as tall as its items; height is only the most.
-    openOverlay({ mod: "menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
+  // `g`: this space's git, to offer the worktree items.
+  menu(w, g) {
+    let checkout = null;
+    if (g) checkout = g.linked ? "linked" : "main";
+    openSpaceMenu(w.id, checkout);
   }
 
   orderingDue(now) {
@@ -295,10 +312,23 @@ export default class Spaces extends View {
     return out.filter(r => this.shown.has(r.w.id));
   }
 
-  // The rows, under a header per machine once one isn't this computer.
+  // The rows as the folder tree: folders, spaces (each with its worktrees) and a
+  // header per remote machine, in the tree's order.
   grouped(t, collapsed) {
     const rows = this.ordered();
     const draw = (r) => (collapsed ? this.compact(r, t) : this.row(r, t));
+    // Each space with the worktree spaces nested under it.
+    const groups = {};
+    let last = null;
+    for (const r of rows) {
+      if (r.tree && last && groups[last][0].g?.repo === r.g?.repo) {
+        groups[last].push(r);
+        continue;
+      }
+      last = `space:${r.w.id}`;
+      groups[last] = [r];
+    }
+    const tops = Object.values(groups).map(([r]) => ({ id: r.w.id, machine: r.w.machine ?? null }));
     const remote = [...new Set([...rows.map(r => r.w.machine).filter(Boolean), ...this.machines.map(m => m.name), ...Object.keys(this.reconnecting)])].sort();
     const loading = m => {
       const layout = machines().find(k => k.name === m)?.layout;
@@ -306,24 +336,24 @@ export default class Spaces extends View {
         || spaces().some(s => (s.machine ?? null) === m && !this.shown.has(s.id));
     };
     const loadingRow = m => div().id(`machine-loading-${m ?? "local"}`).h(28).flex_none().px(8).text_size(12).text_color(t.dim).child(collapsed ? "…" : "Loading…");
-    if (!remote.length) return loading(null) && !rows.length ? [loadingRow(null)] : rows.map(draw);
-    const machineNames = [null, ...remote];
-    return machineNames.flatMap((m) => {
-      const mine = rows.filter((r) => (r.w.machine ?? null) === m);
+    const nodes = this.folders.nodes({ spaces: tops, machines: remote });
+    if (!nodes.length) return loading(null) ? [loadingRow(null)] : [];
+    // A machine's header and, unless it's folded, a row to start a space when it has nothing.
+    const machineBlock = (node) => {
+      const m = nameOf(node.key);
       const repair = this.reconnecting[m];
       const machine = this.machines.find(k => k.name === m) ?? repair?.machine;
       const connected = !m || machine?.state === "connected";
       const rebuilt = this.rebuilt(machine) || !!repair;
-      const folded = this.folded.has(m);
+      const folded = node.folded;
       const head = h_flex().id(`machine-${m ?? "local"}`).h(26).flex_none().px(collapsed ? 2 : 8).gap(7).items_center().text_size(11).text_color(t.dim)
         .cursor_pointer().hover(s => s.bg(t.hover))
         .on_click((_e, cx) => {
-          folded ? this.folded.delete(m) : this.folded.add(m);
-          localStorage.setItem("machines.folded", JSON.stringify([...this.folded]));
+          this.folders.toggleFold(node.key);
           cx.notify();
         })
-        .child(svg(`mods/workspace-chrome/${m ? "server" : "monitor"}.svg`).size(13).flex_none())
-        .when(!collapsed, el => el.child(div().flex_1().truncate().child(m ?? "This computer"))
+        .child(svg("mods/workspace-chrome/server.svg").size(13).flex_none())
+        .when(!collapsed, el => el.child(div().flex_1().truncate().child(m))
           .when(!connected && !rebuilt, el => el.child(div().flex_none().child((machine?.state ?? "asleep").replace(/_/g, " "))))
           .when(rebuilt, el => el.child(h_flex().flex_none().gap(3).items_center()
             .child(div().max_w(140).truncate().child(repair?.error || "rebuilt ·"))
@@ -340,9 +370,25 @@ export default class Spaces extends View {
         .text_size(12).text_color(t.dim).hover(s => s.bg(t.hover).text_color(t.foreground))
         .on_click(() => run("space.new", { machine: m ?? "" }))
         .child(svg("mods/workspace-chrome/plus.svg").size(12)).when(!collapsed, el => el.child("New space there"));
-      if (!collapsed && rebuilt) return [head];
-      return [head, ...(folded ? [] : mine.length ? mine.map(draw) : [loading(m) ? loadingRow(m) : empty])];
-    });
+      const shown = this.folders.wrap(head, node, t, collapsed);
+      if (!collapsed && rebuilt) return { rows: [shown], hidesChildren: true };
+      if (folded || !node.empty) return { rows: [shown], hidesChildren: false };
+      return { rows: [shown, this.folders.indent(loading(m) ? loadingRow(m) : empty, node.depth + 1, collapsed)], hidesChildren: false };
+    };
+    const out = [];
+    let hiddenBelow = null; // depth of a rebuilt machine whose spaces aren't shown
+    for (const node of nodes) {
+      if (hiddenBelow !== null && node.depth > hiddenBelow) continue;
+      hiddenBelow = null;
+      if (node.kind === "folder") out.push(this.folders.wrap(this.folders.folderRow(node, t, collapsed), node, t, collapsed));
+      else if (node.kind === "space") out.push(this.folders.wrap(v_flex().children(groups[node.key].map(draw)), node, t, collapsed));
+      else {
+        const block = machineBlock(node);
+        out.push(...block.rows);
+        if (block.hidesChildren) hiddenBelow = node.depth;
+      }
+    }
+    return out;
   }
 
   // Only what's unusual, after the name: "herdr \u00b7 spike \u21912 \u21931". The repo or
@@ -367,9 +413,8 @@ export default class Spaces extends View {
       .when(g.behind > 0, (el) => el.child(div().flex_none().text_color(t.ansi1).child(`\u2193${g.behind}`)));
   }
 
-  row({ w, i, g, tree }, t) {
+  row({ w, g, tree }, t) {
     const on = w.active;
-    const fromIndex = this.pressed === null ? -1 : spaces().findIndex(s => s.id === this.pressed);
     const colors = shared("space.colors") ?? {};
     const color = colors[w.id] ?? "ansi6";
     const fill = color.startsWith("#") ? color : (MARK[color] ?? t[color]);
@@ -383,36 +428,8 @@ export default class Spaces extends View {
       .rounded(8)
       .when(on, (el) => el.bg(t.selected))
       .when(!on, (el) => el.hover((s) => s.bg(t.hover)))
-      .when(this.pressed === w.id && this.over !== w.id, (el) => el.opacity(0.5))
-      .when(this.pressed !== null && this.over === w.id && this.pressed !== w.id, (el) => el.child(
-        div().absolute().left(0).right(0).h(2).bg(t.accent)
-          .when(fromIndex < i, line => line.bottom(0))
-          .when(fromIndex > i, line => line.top(0)),
-      ))
-      .on_mouse_down("left", () => {
-        this.pressed = w.id;
-        this.over = w.id;
-      })
-      .on_mouse_move((_e, cx) => {
-        const source = spaces().find(s => s.id === this.pressed);
-        const over = source && (source.machine ?? null) === (w.machine ?? null) ? w.id : null;
-        if (this.pressed !== null && this.over !== over) {
-          this.over = over;
-          cx.notify();
-        }
-      })
-      .on_mouse_up("left", (_e, cx) => {
-        const from = this.pressed;
-        const over = this.over;
-        this.pressed = null;
-        this.over = null;
-        if (from !== null && over === w.id && from !== w.id) {
-          const index = spaces().findIndex(s => s.id === w.id);
-          if (index !== -1) run("space.move", { id: from, index: index + 1 });
-        } else if (from === w.id) run("space.select", { id: w.id });
-        cx.notify();
-      })
-      .on_mouse_down("right", () => this.menu(w))
+      .on_click(() => run("space.select", { id: w.id }))
+      .on_mouse_down("right", () => this.menu(w, g))
       .child(
         h_flex()
           .gap(9)
@@ -439,6 +456,7 @@ export default class Spaces extends View {
   }
 
   render() {
+    if (this.overlay) return this.overlay.render();
     const t = theme();
     const collapsed = narrow();
     const palette = ["ansi6", "ansi3", "ansi4", "ansi5", "ansi2", "ansi1"];
@@ -456,10 +474,12 @@ export default class Spaces extends View {
     return v_flex().size_full().min_h(0).bg(t.chrome).text_size(13)
       .child(h_flex().h(31).pl(16).pr(10).items_center().justify_between().text_size(11.5).text_color(t.dim)
         .when(!collapsed, el => el.child("Spaces"))
-        .child(div().id("space-new").size(26).flex_none().flex().items_center().justify_center().rounded(6).hover(s => s.bg(t.hover).text_color(t.foreground))
-          .on_click(() => run("space.new")).child(svg("mods/workspace-chrome/plus.svg").size(14))))
+        .child(h_flex().items_center()
+          .child(this.folders.newFolderButton(t))
+          .child(div().id("space-new").size(26).flex_none().flex().items_center().justify_center().rounded(6).hover(s => s.bg(t.hover).text_color(t.foreground))
+            .on_click(() => run("space.new")).child(svg("mods/workspace-chrome/plus.svg").size(14)))))
       .child(v_flex().flex_1().min_h(0).px(8).pb(14).overflow_y_scrollbar().mode("always")
-        .on_mouse_up("left", (_e, cx) => { this.pressed = null; cx.notify(); })
+        .on_mouse_up("left", (_e, cx) => { this.folders.cancel(); cx.notify(); })
         .children(this.grouped(t, collapsed)));
   }
 }

@@ -52,7 +52,7 @@ function placeOf(tree, key) {
 }
 
 // The machine on the path from `ref` up to the root; null for this computer.
-function machineAt(tree, ref) {
+export function machineAt(tree, ref) {
   const seen = new Set();
   let at = ref;
   while (!seen.has(at)) {
@@ -178,6 +178,7 @@ export function deleteFolder(tree, id) {
 }
 
 export function updateFolder(tree, id, patch) {
+  if (!(id in tree.folders)) return tree;
   return { ...tree, folders: { ...tree.folders, [id]: { ...tree.folders[id], ...patch } } };
 }
 
@@ -188,7 +189,7 @@ export function setFolded(tree, key, folded) {
   return { ...tree, machines: { ...tree.machines, [name]: { ...tree.machines[name], folded } } };
 }
 
-function isFolded(tree, key) {
+export function isFolded(tree, key) {
   if (kindOf(key) === "folder") return tree.folders[nameOf(key)]?.folded === true;
   return tree.machines[nameOf(key)]?.folded === true;
 }
