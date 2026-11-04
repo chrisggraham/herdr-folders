@@ -52,7 +52,7 @@ Default places:
 |---|---|---|
 | New folder at root | Folder-plus button on the "Spaces" header | Folder "New folder" at root, Edit folder opens |
 | New folder inside | Folder or machine right-click → New folder here | Same, in that parent |
-| Edit folder | Folder right-click → Edit folder… | Dialog: name, icon row, color (24 presets) |
+| Edit folder | Folder right-click → Edit folder… | Dialog: name, icon row, color (24 presets, hex field with preview) |
 | Set color | Folder right-click | 24 swatches at the top of the menu, plus a no-color swatch |
 | Delete folder | Folder right-click → Delete folder | Its children move to its parent at its place. No space closes |
 | Fold / unfold | Chevron on a folder or machine row | Stored in the tree |
@@ -64,14 +64,14 @@ The space right-click menu is Herdr's own, unchanged.
 ## Icons and colors
 
 - Icon: default `mods/workspace-chrome/folder.svg`. The Edit folder dialog shows a row of these shipped icons: folder, layers, archive, files, file-text, server, monitor, terminal, git-branch, settings, pin, clock. Store the path.
-- Color: a theme name (`ansi3`, still draws for old folders) or a hex value. 24 hex presets in 3 rows of 8, one hue per column in this order: red, orange, yellow, green, teal, blue, violet, pink. Row 1 vibrant, row 2 a little muted, row 3 more muted (Chris's muted values: orange #c67e57, green #4e9c6b, teal #399a8f, blue #5d84cc, violet #8377cf, pink #bd6790). "No color" (grey) sits on its own row below. No custom colors, no hex field, no slider. New folders start expanded; a drop onto a folded folder leaves it folded.
+- Color: a theme name (`ansi3`, still draws for old folders) or a hex value. 24 hex presets in 3 rows of 8, one hue per column in this order: red, orange, yellow, green, teal, blue, violet, pink. Row 1 vibrant, row 2 a little muted, row 3 more muted (Chris's muted values: orange #c67e57, green #4e9c6b, teal #399a8f, blue #5d84cc, violet #8377cf, pink #bd6790). "No color" (grey) sits on its own row below. Custom: a hex field with a live preview swatch; no slider, no recent-colors row. New folders start expanded; a drop onto a folded folder leaves it folded.
 - One `swatches()` renderer for the menu and the dialog, after the prior art's pattern (herdr-spaces-navigation/main.js:502). The dialog uses the prior art's `field()` pattern (main.js:566).
 - A hex color does not follow the theme. Accepted for version 1.
 
 ## Files
 
 - `mods/herdr-folders/main.js`: Herdr's `spaces` code with two hooks (rows, header button).
-- `mods/herdr-folders/tree.js`: pure logic, no app calls: `canMove`, `move`, `insertFolder`, `deleteFolder`, `rowsOf` (tree + spaces + machines → ordered draw list with depth), default places, - `mods/herdr-folders/folders.js`: load, save, shared state, menus, Edit folder dialog.
+- `mods/herdr-folders/tree.js`: pure logic, no app calls: `canMove`, `move`, `insertFolder`, `deleteFolder`, `isHex`, `rowsOf` (tree + spaces + machines → ordered draw list with depth), default places, - `mods/herdr-folders/folders.js`: load, save, shared state, menus, Edit folder dialog.
 - `test/tree.test.js`: `node --test`.
 - `LICENSE` (MIT), `README.md`. Before any distribution: confirm the license of Herdr's `spaces` mod (only source so far: Carlos's NOTICE says Apache 2.0; the local mod states none), then add `LICENSE-APACHE` and `NOTICE` with the changed files listed.
 
@@ -100,9 +100,9 @@ Then `herdr-app check mods/herdr-folders`.
 
 Run in Herdr with the `main-folders` layout, with `herdr-app shot` screenshots in dark mode:
 
-1. Click the folder-plus button on the "Spaces" header. Name the folder "Test", pick the server icon and a preset color. Expected: "Test" shows at the root with that icon and color.
+1. Click the folder-plus button on the "Spaces" header. Name the folder "Test", pick the server icon and a custom hex color. Expected: "Test" shows at the root with that icon and color.
 2. Drag a local space into "Test", then into a child folder of "Test". Expected: the space moves both times and stays there after a mod reload.
 3. Drag the dev-tools machine into "Test". Then try to drag a local space into a folder inside dev-tools. Expected: the machine moves with all its spaces; the second drop shows no drop line and does nothing.
 4. Delete "Test". Expected: its spaces, folders and the machine move to the root; no space closes.
 
-2026-11-04: slider and custom colors removed; 24 presets, 3 rows of 8 (vibrant, a little muted, more muted); + unfolds its folder, drops keep fold (Chris).
+2026-11-04: slider removed; 24 presets, 3 rows of 8 (vibrant, a little muted, more muted) plus a custom hex field; + unfolds its folder, drops keep fold (Chris).

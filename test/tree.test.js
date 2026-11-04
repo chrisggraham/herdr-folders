@@ -11,6 +11,7 @@ import {
   rowsOf,
   setFolded,
   updateFolder,
+  isHex,
 } from "../mods/herdr-folders/tree.js";
 
 // This computer: folders a (holding b and a local space) and a local space.
@@ -235,4 +236,9 @@ test("move: a drop onto a folded folder leaves it folded", () => {
   const tree = sample();
   tree.folders.a.folded = true;
   assert.equal(move(tree, "space:l1", "folder:a", Infinity).folders.a.folded, true);
+});
+
+test("isHex: six hex digits after a #", () => {
+  const cases = [["#a1B2c3", true], ["#000000", true], ["#abc", false], ["a1b2c3", false], ["#12345g", false], ["#1234567", false], ["", false], [null, false]];
+  for (const [text, expected] of cases) assert.equal(isHex(text), expected, String(text));
 });

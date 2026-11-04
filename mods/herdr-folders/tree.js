@@ -11,6 +11,7 @@
 export const ROOT = "root";
 export const DEFAULT_ICON = "mods/workspace-chrome/folder.svg";
 
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
 
 export function emptyTree() {
   return { version: 1, folders: {}, machines: {}, children: { [ROOT]: [] } };
@@ -223,4 +224,10 @@ export function rowsOf(tree, known) {
   const nodes = [];
   walk(ROOT, 0, nodes);
   return nodes;
+}
+
+// ---- colors ----
+
+export function isHex(text) {
+  return typeof text === "string" && HEX_COLOR.test(text);
 }

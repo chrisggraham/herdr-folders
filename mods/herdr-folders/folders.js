@@ -7,7 +7,7 @@ import { v_flex, h_flex, InputState, Input } from "gpui-base";
 import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
 import {
   ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear,
-  insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf,
+  insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, isHex,
 } from "./tree.js";
 
 const MOD = "herdr-folders";
@@ -313,7 +313,13 @@ class EditFolderDialog {
     this.icon = folder.icon ?? DEFAULT_ICON;
     this.color = folder.color ?? null;
     this.name = InputState.new({ value: folder.name });
+    this.hex = InputState.new({ value: isHex(this.color) ? this.color : "", placeholder: "#rrggbb" });
     this.name.on("submit", () => this.save());
+    this.hex.on("change", (_e, cx) => {
+      if (!isHex(this.hex.value())) return;
+      this.color = this.hex.value();
+      cx.notify();
+    });
     this.name.set_selected_range({ start: 0, end: folder.name.length });
     this.name.focus();
   }
@@ -327,6 +333,7 @@ class EditFolderDialog {
 
   chooseColor(color, cx) {
     this.color = color;
+    this.hex.set_value(isHex(color) ? color : "");
     cx.notify();
   }
 
@@ -342,6 +349,7 @@ class EditFolderDialog {
       .child(this.field(t, "Name", Input.new(this.name).w_full().text_size(13).text_color(t.foreground)))
       .child(this.labeled(t, "Icon", this.iconRow(t)))
       .child(this.labeled(t, "Color", swatches(t, "edit", [...PRESETS, NO_COLOR], this.color, (color, cx) => this.chooseColor(color, cx))))
+      .child(this.hexRow(t))
       .child(h_flex().pt(4).gap(8).justify_end()
         .child(this.button(t, "folder-cancel", "Cancel", false, () => closeOverlay(this.overlay)))
         .child(this.button(t, "folder-save", "Save", true, () => this.save())));
@@ -368,6 +376,14 @@ class EditFolderDialog {
         })
         .child(svg(path).size(15).text_color(t.foreground));
     }));
+  }
+
+  // A preview of the color, and the hex field.
+  hexRow(t) {
+    const preview = div().size(34).flex_none().rounded(8).border_1().border_color(t.input).bg(fillOf(this.color, t));
+    const hexBox = div().flex_1().min_w(0).h(34).px(10).flex().items_center().rounded(8).border_1().border_color(t.input).bg(t.background)
+      .child(Input.new(this.hex).w_full().text_size(13).text_color(t.foreground));
+    return h_flex().gap(8).child(preview).child(hexBox);
   }
 
   button(t, key, label, primary, action) {
