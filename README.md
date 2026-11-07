@@ -14,8 +14,6 @@ Folders is a sidebar mod for Herdr. It is Herdr's own Spaces sidebar with nested
 - Drag and drop to move spaces, folders and machines.
 - All else is Herdr's standard sidebar, unchanged: space rows, git tail, worktrees and the space menu.
 
-![Edit folder dialog](docs/edit-folder.png)
-
 ## Install
 
 Option 1. Copy the mod.
