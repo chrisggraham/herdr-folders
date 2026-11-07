@@ -7,7 +7,7 @@ import { v_flex, h_flex, InputState, Input } from "gpui-base";
 import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
 import {
   ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear,
-  insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, isHex,
+  newSpaceSlot, insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, isHex,
 } from "./tree.js";
 
 const MOD = "herdr-folders";
@@ -145,7 +145,8 @@ export class Folders {
     const fresh = current.find((s) => !pending.before.includes(s.id) && (s.machine ?? null) === pending.machine);
     if (!fresh) return;
     setShared(PENDING_KEY, null);
-    saveTree(move(loadTree(), `space:${fresh.id}`, pending.ref, Infinity));
+    const tree = loadTree();
+    saveTree(move(tree, `space:${fresh.id}`, pending.ref, newSpaceSlot(tree, pending.ref)));
   }
 
   // ---- rows ----

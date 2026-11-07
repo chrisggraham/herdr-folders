@@ -44,7 +44,7 @@ Keys: `folder:<id>`, `space:<id>`, `machine:<name>`. A space id for a remote spa
 Default places:
 - A space or machine in no list shows at the end of the root. A remote space in no list shows at the end of its machine.
 - A new folder goes after the last folder in its parent.
-- A new space made with a folder's + goes at the end of that folder.
+- A new space made with a folder's + goes after that folder's own spaces: before its first subfolder or machine, else at the end.
 
 ## Actions
 

@@ -118,6 +118,14 @@ export function slotNear(tree, ref, key, target, side) {
   return side === "after" ? at + 1 : at;
 }
 
+// The index for a new space in `ref`: after its own spaces, before its first
+// folder or machine, else last.
+export function newSpaceSlot(tree, ref) {
+  const list = tree.children[ref] ?? [];
+  const at = list.findIndex(isContainer);
+  return at < 0 ? list.length : at;
+}
+
 // ---- folders ----
 
 // A new folder goes after the last folder in `ref`, else first.

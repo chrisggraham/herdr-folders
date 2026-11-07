@@ -6,6 +6,7 @@ import {
   move,
   slotNear,
   insertFolder,
+  newSpaceSlot,
   deleteFolder,
   settle,
   rowsOf,
@@ -130,6 +131,16 @@ test("deleteFolder: a folder in no list hands its children to the root's end", (
   tree.children.root = ["machine:dev"];
   const after = deleteFolder(tree, "a");
   assert.deepEqual(after.children.root, ["machine:dev", "folder:b", "space:l2"]);
+});
+
+test("newSpaceSlot: before the first subfolder or machine, else last", () => {
+  const tree = sample();
+  tree.children["folder:a"] = ["space:l2", "folder:b", "space:l3", "machine:dev"];
+  assert.equal(newSpaceSlot(tree, "folder:a"), 1);
+  assert.equal(newSpaceSlot(tree, "root"), 0);
+  assert.equal(newSpaceSlot(tree, "folder:m"), 1);
+  assert.equal(newSpaceSlot(tree, "folder:b"), 0);
+  assert.equal(newSpaceSlot(tree, "folder:missing"), 0);
 });
 
 test("insertFolder: goes after the last folder in its parent", () => {
