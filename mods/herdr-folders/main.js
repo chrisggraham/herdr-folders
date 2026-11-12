@@ -68,7 +68,7 @@ export function tone(t, status) {
 export default class Spaces extends View {
   init(_props, cx) {
     // Opened as one of the folder menus or dialogs: draw only that.
-    this.overlay = overlayFor(props());
+    this.overlay = overlayFor(props(), cx);
     if (this.overlay) return;
     this.folders = new Folders();
     this.git = {}; // where() -> { name, branch, ahead, behind, repo, linked }, null: not a repo

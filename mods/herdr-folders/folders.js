@@ -4,11 +4,12 @@
 
 import { div, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
-import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared } from "herdr";
+import { run, spaces, openOverlay, closeOverlay, theme, shared, setShared, keys } from "herdr";
 import {
   ROOT, DEFAULT_ICON, emptyTree, kindOf, nameOf, machineAt, isFolded, canMove, move, slotNear,
   newSpaceSlot, insertFolder, deleteFolder, updateFolder, setFolded, settle, rowsOf, isHex,
 } from "./tree.js";
+import { spaceMenuItems, folderMenuItems, iconOf, shortcutOf, stepSelection } from "./menu.js";
 
 const MOD = "herdr-folders";
 const STORE_KEY = "herdr-folders";
@@ -80,10 +81,10 @@ function openEditFolder(id) {
 }
 
 // The view for a copy of the sidebar opened as an overlay, or null for the sidebar itself.
-export function overlayFor(props) {
+export function overlayFor(props, cx) {
   const p = props ?? {};
-  if (p.folderMenu) return new FolderMenu(p.folderMenu, p.overlay);
-  if (p.spaceMenu) return new SpaceMenu(p.spaceMenu, p.git, p.overlay);
+  if (p.folderMenu) return new FolderMenu(p.folderMenu, p.overlay, cx);
+  if (p.spaceMenu) return new SpaceMenu(p.spaceMenu, p.git, p.overlay, cx);
   if (p.edit) return new EditFolderDialog(p.edit, p.overlay);
   return null;
 }
@@ -267,16 +268,6 @@ export class Folders {
 
 // ---- shared pieces of the overlays ----
 
-function menuItem(t, overlay, key, label, action) {
-  return div().id(key).h(30).px(10).flex().items_center().rounded(6).cursor_pointer()
-    .hover((s) => s.bg(t.hover))
-    .on_click(() => {
-      closeOverlay(overlay);
-      action();
-    })
-    .child(label);
-}
-
 function separator(t) {
   return div().mx(7).my(4).h(1).bg(t.border);
 }
@@ -295,14 +286,59 @@ function swatches(t, key, colors, current, pick) {
   );
 }
 
-const popupFrame = (t, id) => v_flex().id(id).size_full().p(5).gap(1).bg(t.popover).text_color(t.foreground).text_size(12.5);
+// A popup of color swatches over a list of items (menu.js), drawn and driven
+// as Herdr's own menu: icons, key hints, ↑/↓ to move, Enter to run, Esc to close.
+class ItemsPopup {
+  constructor(overlay, cx) {
+    this.overlay = overlay;
+    this.at = 0;
+    this.handle = cx.focus_handle();
+    this.handle.focus();
+  }
+
+  choose(item) {
+    closeOverlay(this.overlay);
+    this.run(item);
+  }
+
+  frame(t, id, items, top) {
+    const bound = keys();
+    return v_flex().id(id).track_focus(this.handle).size_full().p(5).gap(1).bg(t.popover).text_color(t.foreground).text_size(12.8)
+      .on_key_down((e, cx) => {
+        const next = stepSelection(this.at, items.length, e.key);
+        if (next !== null) this.at = next;
+        else if (e.key === "enter") this.choose(items[this.at]);
+        else if (e.key === "escape") closeOverlay(this.overlay);
+        else return;
+        cx.notify();
+      })
+      .when(Boolean(top), (el) => el.child(top))
+      .children(items.map((item, i) => v_flex()
+        .when(Boolean(item.separated), (el) => el.child(separator(t)))
+        .child(h_flex().id(item.id).h(31).px(8).gap(9).rounded(7).items_center().justify_between().cursor_pointer()
+          .text_color(t.foreground)
+          .when(i === this.at, (el) => el.bg(t.selected))
+          .hover((s) => s.bg(t.hover))
+          .on_click(() => this.choose(item))
+          .child(svg(iconOf(item.command)).size(14).flex_none().text_color(t.muted))
+          .child(div().flex_1().child(item.label))
+          .child(div().text_size(11).text_color(t.dim).child(shortcutOf(bound, item.command, item.args))))));
+  }
+}
 
 // ---- overlay: a folder's or machine's menu ----
 
-class FolderMenu {
-  constructor(key, overlay) {
+class FolderMenu extends ItemsPopup {
+  constructor(key, overlay, cx) {
+    super(overlay, cx);
     this.key = key;
-    this.overlay = overlay;
+  }
+
+  run(item) {
+    const id = nameOf(this.key);
+    if (item.command === "folder.new") newFolderIn(this.key);
+    else if (item.command === "folder.edit") openEditFolder(id);
+    else if (item.command === "folder.delete") saveTree(deleteFolder(loadTree(), id));
   }
 
   render() {
@@ -310,16 +346,12 @@ class FolderMenu {
     const tree = loadTree();
     const id = nameOf(this.key);
     const isFolder = kindOf(this.key) === "folder";
-    const item = (key, label, action) => menuItem(t, this.overlay, key, label, action);
     const paint = (color) => {
       saveTree(updateFolder(loadTree(), id, { color }));
       closeOverlay(this.overlay);
     };
-    return popupFrame(t, "folder-menu")
-      .when(isFolder, (el) => el.child(swatches(t, "folder", PRESETS, tree.folders[id]?.color ?? null, paint)))
-      .child(item("folder-new-here", "New folder here", () => newFolderIn(this.key)))
-      .when(isFolder, (el) => el.child(item("folder-edit", "Edit folder…", () => openEditFolder(id))))
-      .when(isFolder, (el) => el.child(separator(t)).child(item("folder-delete", "Delete folder", () => saveTree(deleteFolder(loadTree(), id)))));
+    const colors = isFolder ? swatches(t, "folder", PRESETS, tree.folders[id]?.color ?? null, paint) : null;
+    return this.frame(t, "folder-menu", folderMenuItems(kindOf(this.key)), colors);
   }
 }
 
@@ -327,32 +359,32 @@ class FolderMenu {
 
 // Herdr's own space menu has no colors, so this one adds the swatches to its items.
 // The sidebar gives a missing color a new one, so "No color" is stored as "dim".
-class SpaceMenu {
-  constructor(id, git, overlay) {
+class SpaceMenu extends ItemsPopup {
+  constructor(id, git, overlay, cx) {
+    super(overlay, cx);
     this.id = id;
     this.git = git;
-    this.overlay = overlay;
+  }
+
+  run(item) {
+    const id = this.id;
+    if (item.command !== "worktree") run(item.command, { id });
+    else {
+      const size = item.action === "open" ? { width: 560, height: 480 } : { width: 440, height: 260 };
+      openOverlay({ mod: "worktree", kind: "dialog", ...size, props: { space: id, action: item.action } });
+    }
   }
 
   render() {
     const t = theme();
     const id = this.id;
-    const item = (key, label, action) => menuItem(t, this.overlay, key, label, action);
-    const worktree = (action, size) => () => openOverlay({ mod: "worktree", kind: "dialog", ...size, props: { space: id, action } });
     const stored = (shared("space.colors") ?? {})[id] ?? null;
     const paint = (color) => {
       setShared("space.colors", { ...(shared("space.colors") ?? {}), [id]: color ?? "dim" });
       closeOverlay(this.overlay);
     };
-    return popupFrame(t, "space-menu")
-      .child(swatches(t, "space", PRESETS, stored === "dim" ? NO_COLOR : stored, paint))
-      .child(item("space-rename", "Rename", () => run("space.rename", { id })))
-      .when(Boolean(this.git), (el) => el
-        .child(item("space-worktree-new", "New worktree", worktree("new", { width: 440, height: 260 })))
-        .child(item("space-worktree-open", "Open worktree", worktree("open", { width: 560, height: 480 }))))
-      .when(this.git === "linked", (el) => el.child(item("space-worktree-remove", "Remove worktree", worktree("remove", { width: 440, height: 260 }))))
-      .child(separator(t))
-      .child(item("space-close", "Close", () => run("space.close", { id })));
+    const items = spaceMenuItems(this.git).map((item) => ({ ...item, args: { id } }));
+    return this.frame(t, "space-menu", items, swatches(t, "space", PRESETS, stored === "dim" ? NO_COLOR : stored, paint));
   }
 }
 
