@@ -16,6 +16,7 @@ const PENDING_KEY = "herdr-folders.pending";
 const NEW_FOLDER_NAME = "New folder";
 const PENDING_SPACE_MS = 60000;
 const FOLDER_ROW = 28;
+const RAIL_CELL = 32; // as main.js: one cell of the narrow sidebar
 const INDENT = 14;
 const EDGE = 7; // px at a folder row's top or bottom that drop beside it, not into it
 const SPACE_ROW_HALF = 15;
@@ -173,7 +174,11 @@ export class Folders {
         this.toggleFold(node.key);
         cx.notify();
       });
-    if (collapsed) return row.justify_center().child(tile);
+    // The rail: the tile alone in a cell, named by its tooltip.
+    if (collapsed) {
+      return h_flex().flex_none().justify_center().child(row.w(RAIL_CELL).px(0).rounded(6).justify_center()
+        .tooltip(node.folded ? `${folder.name} (folded)` : folder.name).child(tile));
+    }
     return row
       .child(tile)
       .child(div().flex_1().min_w(0).truncate().font_medium().child(folder.name))
