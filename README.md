@@ -24,6 +24,8 @@ Option 1. Copy the mod.
 3. Check the mod:
    `herdr-app check ~/.config/herdr-app/mods/herdr-folders`
 
+Note: if you link `mods/herdr-folders` into `~/.config/herdr-app/mods/` instead of copying it, Herdr does not reload the mod when you save a file. Quit and reopen Herdr to load your changes. Your terminals keep running in `herdr-core`.
+
 Option 2. Give your Herdr agent the URL of this repo. It installs the mod from the files, or builds it from `RECIPE.md`.
 
 ## Use
