@@ -3,16 +3,20 @@ Copyright 2026 Chris Graham
 Released under the MIT License (see LICENSE).
 
 This product includes code from Herdr (https://github.com/herdrdev/herdr-app),
-the "spaces" mod, version 0.1.13 (defaults/mods/spaces), licensed under the
-Apache License 2.0 (see LICENSE-APACHE).
+the "spaces" mod, version 0.1.13 with Herdr's changes up to version 0.1.15
+merged in (defaults/mods/spaces), licensed under the Apache License 2.0
+(see LICENSE-APACHE).
 
 Files changed from Herdr's spaces mod:
   mods/herdr-folders/main.js   Changed: rows drawn as a folder tree, no
                                "This computer" header, a New folder button,
                                machine folding kept in the folder tree, drag
-                               and drop through the tree.
+                               and drop through the tree, Folders' own space
+                               menu with color swatches, the v0.1.14 and
+                               v0.1.15 rail, git lookups and machine login
+                               guidance fitted to the tree.
   mods/herdr-folders/mod.json  Changed: the title is "Folders" and
-                               `cloned_from` was added.
+                               `cloned_from` (spaces 0.1.15) was added.
 
 Files added, original to herdr-folders (MIT):
   mods/herdr-folders/tree.js
