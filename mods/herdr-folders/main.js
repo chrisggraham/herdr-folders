@@ -14,8 +14,8 @@
 
 import { View, div, svg } from "gpui-kit";
 import { v_flex, h_flex } from "gpui-base";
-import { spaces, machines, panes, run, openOverlay, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
-import { Folders, overlayFor } from "./folders.js";
+import { spaces, machines, panes, run, exec, hc, theme, shared, setShared, watchFolder, window, layout, props } from "herdr";
+import { Folders, overlayFor, openSpaceMenu } from "./folders.js";
 import { nameOf } from "./tree.js";
 
 function find(node, id) {
@@ -259,9 +259,8 @@ export default class Spaces extends View {
     });
   }
 
-  menu(w) {
-    // A popup is as tall as its items; height is only the most.
-    openOverlay({ mod: "menu", kind: "popup", width: 200, height: 260, props: { tab: "space", target: { id: w.id } } });
+  menu(w, g) {
+    openSpaceMenu(w.id, g ? (g.linked ? "linked" : "main") : null);
   }
 
   orderingDue(now) {
@@ -426,7 +425,7 @@ export default class Spaces extends View {
       .when(on, (el) => el.bg(t.selected))
       .when(!on, (el) => el.hover((s) => s.bg(t.hover)))
       .on_click(() => run("space.select", { id: w.id }))
-      .on_mouse_down("right", () => this.menu(w))
+      .on_mouse_down("right", () => this.menu(w, g))
       .child(
         h_flex()
           .gap(9)

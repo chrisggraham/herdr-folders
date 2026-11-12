@@ -69,6 +69,11 @@ function openFolderMenu(key) {
   openOverlay({ mod: MOD, kind: "popup", width: 236, height: 330, props: { folderMenu: key } });
 }
 
+// `git` is "main", "linked" or null, for the worktree items.
+export function openSpaceMenu(id, git) {
+  openOverlay({ mod: MOD, kind: "popup", width: 236, height: 330, props: { spaceMenu: id, git } });
+}
+
 function openEditFolder(id) {
   openOverlay({ mod: MOD, kind: "dialog", width: 460, props: { edit: id } });
 }
@@ -77,6 +82,7 @@ function openEditFolder(id) {
 export function overlayFor(props) {
   const p = props ?? {};
   if (p.folderMenu) return new FolderMenu(p.folderMenu, p.overlay);
+  if (p.spaceMenu) return new SpaceMenu(p.spaceMenu, p.git, p.overlay);
   if (p.edit) return new EditFolderDialog(p.edit, p.overlay);
   return null;
 }
@@ -309,6 +315,39 @@ class FolderMenu {
       .child(item("folder-new-here", "New folder here", () => newFolderIn(this.key)))
       .when(isFolder, (el) => el.child(item("folder-edit", "Edit folder…", () => openEditFolder(id))))
       .when(isFolder, (el) => el.child(separator(t)).child(item("folder-delete", "Delete folder", () => saveTree(deleteFolder(loadTree(), id)))));
+  }
+}
+
+// ---- overlay: a space's menu ----
+
+// Herdr's own space menu has no colors, so this one adds the swatches to its items.
+// The sidebar gives a missing color a new one, so "No color" is stored as "dim".
+class SpaceMenu {
+  constructor(id, git, overlay) {
+    this.id = id;
+    this.git = git;
+    this.overlay = overlay;
+  }
+
+  render() {
+    const t = theme();
+    const id = this.id;
+    const item = (key, label, action) => menuItem(t, this.overlay, key, label, action);
+    const worktree = (action, size) => () => openOverlay({ mod: "worktree", kind: "dialog", ...size, props: { space: id, action } });
+    const stored = (shared("space.colors") ?? {})[id] ?? null;
+    const paint = (color) => {
+      setShared("space.colors", { ...(shared("space.colors") ?? {}), [id]: color ?? "dim" });
+      closeOverlay(this.overlay);
+    };
+    return popupFrame(t, "space-menu")
+      .child(swatches(t, "space", PRESETS, stored === "dim" ? NO_COLOR : stored, paint))
+      .child(item("space-rename", "Rename", () => run("space.rename", { id })))
+      .when(Boolean(this.git), (el) => el
+        .child(item("space-worktree-new", "New worktree", worktree("new", { width: 440, height: 260 })))
+        .child(item("space-worktree-open", "Open worktree", worktree("open", { width: 560, height: 480 }))))
+      .when(this.git === "linked", (el) => el.child(item("space-worktree-remove", "Remove worktree", worktree("remove", { width: 440, height: 260 }))))
+      .child(separator(t))
+      .child(item("space-close", "Close", () => run("space.close", { id })));
   }
 }
 
