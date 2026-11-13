@@ -168,7 +168,8 @@ export class Folders {
     const id = nameOf(node.key);
     const folder = this.tree.folders[id];
     const tile = h_flex().size(18).flex_none().rounded(5).items_center().justify_center().bg(fillOf(folder.color, t))
-      .child(svg(folder.icon ?? DEFAULT_ICON).size(11).text_color("#ffffff"));
+      // 12 in 18 leaves 3 px on each side; 11 left 3.5 and the icon sat half a pixel off.
+      .child(svg(folder.icon ?? DEFAULT_ICON).size(12).text_color("#ffffff"));
     const row = h_flex().id(`folder-${id}`).h(FOLDER_ROW).flex_none().px(collapsed ? 2 : 8).gap(9).items_center().rounded(8)
       .text_color(t.foreground).cursor_pointer().hover((s) => s.bg(t.hover))
       .on_click((_e, cx) => {
@@ -183,12 +184,14 @@ export class Folders {
     return row
       .child(tile)
       .child(div().flex_1().min_w(0).truncate().font_medium().child(folder.name))
-      .child(div().id(`folder-add-${id}`).flex_none().px(4).rounded(4).text_color(t.dim)
+      // A drawn plus in a square: the text "+" took the row's line box and was cut at the top.
+      .child(h_flex().id(`folder-add-${id}`).size(18).flex_none().items_center().justify_center().rounded(4).text_color(t.dim)
         .hover((s) => s.bg(t.hover).text_color(t.foreground))
+        .tooltip("New space in this folder")
         .on_click((_e, cx) => {
           cx.stop_propagation();
           this.newSpaceIn(node.key);
-        }).child("+"))
+        }).child(svg("mods/workspace-chrome/plus.svg").size(12)))
       .child(svg(`mods/workspace-chrome/chevron-${node.folded ? "right" : "down"}.svg`).size(11).flex_none().text_color(t.dim));
   }
 
