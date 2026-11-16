@@ -1,6 +1,6 @@
 # Folders
 
-Folders is a sidebar mod for Herdr. It is Herdr's own Spaces sidebar with nested folders added. You can put spaces, remote machines and other folders inside a folder, to any depth. Everything else in the sidebar works as Herdr ships it, except drag to reorder. Herdr's own space order (`space.move`) is replaced: when you drag, you reorder the folder tree.
+Folders is a sidebar mod for Herdr. It is Herdr's own Spaces sidebar with nested folders added. You can put spaces, remote machines and other folders inside a folder, to any depth. The sidebar works as Herdr ships it, except for drag to reorder and the space and folder menus, which Folders draws itself with color swatches. Herdr's own space order (`space.move`) is replaced: when you drag, you reorder the folder tree.
 
 ![Folders sidebar](preview.png)
 

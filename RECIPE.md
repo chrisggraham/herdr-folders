@@ -8,7 +8,7 @@ Folders is a Herdr sidebar mod. It shows Herdr's Spaces sidebar with nested fold
 
 - The standard Herdr Spaces sidebar, with the header "Spaces". The header has a folder-plus button (26px square, 14px icon, `mods/workspace-chrome/folder-plus.svg`).
 - No "This computer" header. The root is this computer.
-- A folder row is 28px high. It has an 18px tile (radius 5px) with a white 11px icon, the folder name in medium weight, a "+" button, and a chevron (11px, `chevron-right.svg` when folded, `chevron-down.svg` when open).
+- A folder row is 28px high. It has an 18px tile (radius 5px) with a white 12px icon, the folder name in medium weight, a "+" button, and a chevron (11px, `chevron-right.svg` when folded, `chevron-down.svg` when open).
 - The tile color is the folder color. With no color it is the theme's dim color.
 - Each level of nesting indents 14px.
 - A remote machine shows Herdr's machine header (name, state). It folds like a folder.
