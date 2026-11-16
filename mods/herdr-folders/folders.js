@@ -1,6 +1,11 @@
 // Everything folder-shaped that touches Herdr: the saved tree, the folder rows,
 // dragging, and the popups and dialog the sidebar opens as overlays of itself.
 // The rules for where things may go live in tree.js.
+//
+// The popup row drawing and key handling (ItemsPopup) are adapted from Herdr's
+// "menu" mod v0.1.15 (https://github.com/herdrdev/herdr-app, defaults/mods/menu,
+// Apache 2.0; see LICENSE-APACHE and NOTICE). Changed from it: the items are
+// objects, and a folder's items are added.
 
 import { div, svg } from "gpui-kit";
 import { v_flex, h_flex, InputState, Input } from "gpui-base";
