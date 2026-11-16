@@ -13,7 +13,7 @@ Folders is a Herdr sidebar mod. It shows Herdr's Spaces sidebar with nested fold
 - Each level of nesting indents 14px.
 - A remote machine shows Herdr's machine header (name, state). It folds like a folder.
 - Space rows are Herdr's: avatar, name, git tail, worktrees under their checkout.
-- In a narrow sidebar (width under 160px) a folder row shows only its tile.
+- In a narrow sidebar (width under 160px, Herdr's rail) a folder row shows only its tile in a 32px cell, with a tooltip: its name, plus "(folded)" when folded. The header shows only the new space button.
 
 ## How it behaves
 
@@ -22,6 +22,8 @@ Folders is a Herdr sidebar mod. It shows Herdr's Spaces sidebar with nested fold
 - Click the header button: a folder "New folder" is added after the last folder at the root. The Edit folder dialog opens.
 - Right-click a folder: a popup (236px wide, 330px high) with 32 color swatches, "New folder here", "Edit folder…", a separator, and "Delete folder".
 - Right-click a machine: the popup has "New folder here" only.
+- Right-click a space: a popup (236px wide, 330px high) with the 32 swatches, then Herdr's space items: Rename, New worktree and Open worktree (in a repo), Remove worktree (in a worktree), a separator, and Close.
+- Every popup draws its items as Herdr's menu does: a 14px icon, the label, the global key bound to the command on the right, the first item selected. ↑/↓ move, Enter runs, Esc closes. The item lists are in `mods/herdr-folders/menu.js` (pure, tested).
 - Edit folder dialog (460px wide): Name, Icon (12 icons), Color (32 swatches), a hex field with a preview swatch, and the buttons Cancel and Save. Enter saves. Escape closes. A new folder starts open.
 - Delete a folder: its contents move to its parent at its place. No space closes.
 - Drag a row onto a folder: it goes in as the last child. The folder shows the "selected" background. A folded folder stays folded.
@@ -33,7 +35,7 @@ Folders is a Herdr sidebar mod. It shows Herdr's Spaces sidebar with nested fold
 
 ## Built from
 
-- Start from a clone of Herdr's `spaces` mod v0.1.13: `herdr-app do mod.clone '{"name":"spaces","as":"herdr-folders"}'`. `mod.json`: `"place": "none"`, `"title": "Folders"`, `"cloned_from": {"name": "spaces", "version": "0.1.13"}`.
+- Start from a clone of Herdr's `spaces` mod v0.1.15: `herdr-app do mod.clone '{"name":"spaces","as":"herdr-folders"}'`. `mod.json`: `"place": "none"`, `"title": "Folders"`, `"cloned_from": {"name": "spaces", "version": "0.1.15"}`. (This repo started from v0.1.13 and merged v0.1.14 and v0.1.15 through the `herdr-spaces` branch.)
 - Layout: the sidebar block has `"mod": "herdr-folders"`.
 - `mods/herdr-folders/tree.js` is pure logic with no Herdr calls: `emptyTree`, `canMove`, `move`, `slotNear`, `insertFolder`, `deleteFolder`, `updateFolder`, `setFolded`, `isFolded`, `settle`, `rowsOf`, `isHex`, `machineAt`, `parentOf`.
 - `mods/herdr-folders/folders.js` holds loading and saving, the folder rows, drag and drop, the folder menu, and the Edit folder dialog. It opens the menu and dialog with `openOverlay({mod: "herdr-folders", kind: "popup" | "dialog", props})`.
@@ -49,7 +51,7 @@ Folders is a Herdr sidebar mod. It shows Herdr's Spaces sidebar with nested fold
   - No color (a cross on the dim color), `#a6a6a6 #969696 #858585 #757575 #656565 #545454 #444444`
 - A swatch is 20px round. The current one has a ring in the foreground color.
 - Theme color names (`ansi1` to `ansi6`) in old data draw as muted hex: `ansi6` `#399a8f`, `ansi3` `#c67e57`, `ansi4` `#5d84cc`, `ansi5` `#8377cf`, `ansi2` `#4e9c6b`, `ansi1` `#bd6790`.
-- Tests: `test/tree.test.js`, run with `node --test`.
+- Tests: `test/tree.test.js` and `test/menu.test.js`, run with `node --test`.
 
 ## Watch out
 

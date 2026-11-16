@@ -12,7 +12,8 @@ Folders is a sidebar mod for Herdr. It is Herdr's own Spaces sidebar with nested
 - 12 shipped icons for a folder.
 - 32 preset colors in 4 rows of 8: vibrant, a little muted, more muted, and greys. You can also pick "No color" or enter a custom hex value.
 - Drag and drop to move spaces, folders and machines.
-- All else is Herdr's standard sidebar, unchanged: space rows, git tail, worktrees and the space menu.
+- All else is Herdr's standard sidebar (v0.1.15): space rows, git tail, worktrees, the narrow rail and a remote machine's login guidance.
+- Right-click a space for Herdr's space items with color swatches on top. The menus work like Herdr's: icons, key hints, ↑/↓, Enter and Esc.
 
 ## Install
 
@@ -41,7 +42,9 @@ Option 2. Give your Herdr agent the URL of this repo. It installs the mod from t
 | New space in a folder | "+" on a folder row | The folder unfolds. A new space opens, and it goes in that folder. |
 | Move | Drag a space, folder or machine onto a folder, or between rows | A drop line shows only where the drop is allowed. Drag is the only way to move. |
 
-The space right-click menu is Herdr's own.
+The space right-click menu has Herdr's items (Rename, the worktree items, Close) and the 32 color swatches.
+
+In a narrow sidebar (Herdr's rail, under 160px) a folder shows only its tile, and its tooltip names it. The header keeps only the new space button there.
 
 ## Machines
 
@@ -72,4 +75,4 @@ This section is for maintainers. The `herdr-spaces` branch holds Herdr's untouch
 
 ## License
 
-herdr-folders is MIT licensed (`LICENSE`). `mods/herdr-folders/main.js` started as Herdr's spaces mod v0.1.13, which is Apache 2.0 (`LICENSE-APACHE`, `NOTICE`).
+herdr-folders is MIT licensed (`LICENSE`). `mods/herdr-folders/main.js` started as Herdr's spaces mod v0.1.13, with Herdr's changes up to v0.1.15 merged in, and `mods/herdr-folders/menu.js` follows Herdr's menu mod v0.1.15. Both are Apache 2.0 (`LICENSE-APACHE`, `NOTICE`).
